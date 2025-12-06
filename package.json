@@ -1,0 +1,21 @@
+{
+  "name": "rustlike",
+  "version": "1.0.0",
+  "description": "Rust like utilities and error handling",
+  "keywords": [
+    "rust",
+    "types",
+    "utils"
+  ],
+  "license": "MIT",
+  "author": "Letder40 (https://github.com/Letder40)",
+  "type": "module",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Letder40/rustlike.git"
+  },
+    "scripts": {
+    "build": "tsc"
+  }
+}
