@@ -22,4 +22,3 @@ declare class ErrVariant<E> extends ResultMethods<never, E> {
 export declare const Err: <E>(e: E) => ErrVariant<E>;
 export type Result<T, E> = OkVariant<T> | ErrVariant<E>;
 export {};
-//# sourceMappingURL=result.d.ts.map
