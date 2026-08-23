@@ -1,3 +1,5 @@
+import "./iterable.js"
+
 export {
   installIterableMethods,
   installFindOptionMethod,

@@ -1,4 +1,4 @@
-import { installMethod } from "../_utils/installMethod.js";
+import { installMethod } from "../../utils/installMethod.js";
 import { findOption } from "./iterable.js"
 
 export function installIterableMethods() {

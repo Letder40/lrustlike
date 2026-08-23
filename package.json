@@ -1,6 +1,6 @@
 {
   "name": "lrustlike",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Rust like utilities and error handling",
   "keywords": [
     "rust",
@@ -11,21 +11,30 @@
   "author": "Letder40 (https://github.com/Letder40)",
   "type": "module",
 
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "./result": {
+      "types": "./dist/result.d.ts",
+      "import": "./dist/result.js"
     },
-    "./extensions/*/lazy": {
-        "types": "./dist/extensions/*/lazy.d.ts",
-        "import": "./dist/extensions/*/lazy.js"
+    "./option": {
+      "types": "./dist/option.d.ts",
+      "import": "./dist/option.js"
     },
-    "./extensions/*/eager": {
-      "types": "./dist/extensions/*/eager.d.ts",
-      "import": "./dist/extensions/*/eager.js"
+    "./extensions/lazy": {
+      "types": "./dist/extensions/lazy.d.ts",
+      "import": "./dist/extensions/lazy.js"
+    },
+    "./extensions/eager": {
+      "types": "./dist/extensions/eager.d.ts",
+      "import": "./dist/extensions/eager.js"
+    },
+    "./extensions/iterable/lazy": {
+      "types": "./dist/extensions/iterable/lazy.d.ts",
+      "import": "./dist/extensions/iterable/lazy.js"
+    },
+    "./extensions/iterable/eager": {
+      "types": "./dist/extensions/iterable/eager.d.ts",
+      "import": "./dist/extensions/iterable/eager.js"
     }
   },
 
