@@ -163,3 +163,8 @@ export function Err<T, E>(e: E): Result<T, E>
 export function Err<T, E>(e: E): Result<T, E> {
   return new ErrVariant(e)
 }
+
+export const Result = {
+  Ok,
+  Err
+} as const
