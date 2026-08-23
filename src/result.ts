@@ -1,54 +1,138 @@
-abstract class ResultMethods<T, E> {
-  isOk(this: Result<T, E>): this is OkVariant<T> {
+abstract class ResultAbstract<T, E> {
+  isOk(): this is OkVariant<T, E> {
     return this instanceof OkVariant
   }
 
-  isErr(this: Result<T, E>): this is ErrVariant<E> {
+  isErr(): this is ErrVariant<T, E> {
     return this instanceof ErrVariant
   }
 
-  isOkAnd(this: Result<T, E>, fn: (value: T) => void): boolean {
-    if (this instanceof OkVariant) {
-      fn(this.value)
-      return true
-    }
-    return false
+  isOkAnd(fn: (value: T) => boolean): boolean {
+    return this.isOk() && fn(this.value)
   }
 
-  isErrAnd(this: Result<T, E>, fn: (value: E) => void): boolean {
-    if (this instanceof ErrVariant) {
-      fn(this.error)
-      return true
-    }
-    return false
+  isErrAnd(fn: (value: E) => boolean): boolean {
+    return this.isErr() && fn(this.error)
   }
 
-  expect(this: Result<T, E>, msg: string): T {
-    if (this instanceof ErrVariant) {
-      throw new Error(`${msg} ${String(this.error)}`)
-    }
-    return this.value
+  and<U>(other: Result<U, E>): Result<U, E> {
+    return this.match({
+      Ok: (_) => other,
+      Err: (e) => Err(e)
+    })
   }
 
-  unwrap(this: Result<T, E>): T {
-    if (this instanceof ErrVariant) {
-      throw new Error(`Tried to unwrap Err: ${String(this.error)}`)
-    }
-    return this.value
+  andThen<U>(thenFn: (v: T) => Result<U, E>): Result<U, E> {
+    return this.match({
+      Ok:  (v) => thenFn(v),
+      Err: (e) => Err(e)
+    })
   }
 
-  match<R>(
-    this: Result<T, E>,
-    { Ok, Err }: {Ok: (v: T) => R, Err: (E: E) => R }
-  ): R {
-    if (this instanceof OkVariant) {
-      return Ok(this.value)
-    }
-    return Err(this.error)
+  or<F>(other: Result<T, F>): Result<T, F> {
+    return this.match({
+      Ok:  (v) => Ok(v),
+      Err: (_) => other
+    })
   }
+
+  orElse<F>(elseFn: (e: E) => Result<T, F>): Result<T, F> {
+    return this.match({
+      Ok:  (v) => Ok(v),
+      Err: (e: E) => elseFn(e)
+    })
+  }
+
+  unwrap(): T {
+    return this.match({
+      Ok: v => v,
+      Err: e => {
+        throw new Error(`Tried to unwrap Err: ${String(e)}`)
+      }
+    })
+  }
+
+  expect(msg: string): T {
+    return this.match({
+      Ok: v => v,
+      Err: e => {
+        throw new Error(`${msg}: ${String(e)}`)
+      }
+    })
+  }
+
+  unwrapOr(v: T): T {
+    return this.isOk() ? this.value : v
+  }
+
+  unwrapOrElse(fn: (e: E) => T): T {
+    return this.match({
+      Ok:  (v) => v,
+      Err: (e) => fn(e)
+    })
+  }
+
+  map<U>(mapFn: (v: T) => U): Result<U, E> {
+    return this.match({
+      Ok:  (v) => Ok<U, E>(mapFn(v)),
+      Err: (e) => Err<U, E>(e)
+    })
+  }
+
+  mapOr<U>(fallback: U, mapFn: (v: T) => U): U {
+    return this.match({
+      Ok:  (v) => mapFn(v),
+      Err: (_) => fallback,
+    })
+  }
+
+  mapOrElse<U>(fallback: (e: E) => U, mapFn: (v: T) => U): U {
+    return this.match({
+      Ok:  (v) => mapFn(v),
+      Err: (e) => fallback(e),
+    })
+  }
+
+  mapErr<F>(mapFn: (e: E) => F): Result<T, F> {
+    return this.match({
+      Ok:  (v) => Ok<T, F>(v),
+      Err: (e) => Err<T, F>(mapFn(e))
+    })
+  }
+
+  inspect(inspectFn: (v: T) => void): this {
+    if (this.isOk()) inspectFn(this.value);
+    return this;
+  }
+
+  inspectErr(inspectFn: (v: E) => void): this {
+    if (this.isErr()) inspectFn(this.error);
+    return this;
+  }
+
+  flatten<U>(this: Result<Result<U, E>, E>): Result<U, E> {
+    return this.match({
+      Ok:  (v) => v,
+      Err: (e) => Err(e),
+    })
+  }
+
+  match<R>({
+      Ok,
+      Err
+    }: {
+      Ok: (v: T) => R,
+      Err: (E: E) => R
+    }): R
+  {
+    if (this.isOk()) return Ok(this.value);
+    else if (this.isErr()) return Err(this.error);
+    else throw new Error("unreachable");
+  }
+
 }
 
-class OkVariant<T> extends ResultMethods<T, never> {
+class OkVariant<T, E> extends ResultAbstract<T, E> {
   readonly value: T
   constructor(value: T) {
     super()
@@ -56,9 +140,7 @@ class OkVariant<T> extends ResultMethods<T, never> {
   }
 }
 
-export const Ok = <T>(v: T) => new OkVariant(v)
-
-class ErrVariant<E> extends ResultMethods<never, E> {
+class ErrVariant<T, E> extends ResultAbstract<T, E> {
   readonly error: E
   constructor(error: E) {
     super()
@@ -66,6 +148,18 @@ class ErrVariant<E> extends ResultMethods<never, E> {
   }
 }
 
-export const Err = <E>(e: E) => new ErrVariant(e)
+export type Result<T, E> =
+  | OkVariant<T, E>
+  | ErrVariant<T, E>
 
-export type Result<T, E> = OkVariant<T> | ErrVariant<E>
+export function Ok<T>(v: T): Result<T, never>
+export function Ok<T, E>(v: T): Result<T, E>
+export function Ok<T, E>(v: T): Result<T, E> {
+  return new OkVariant(v)
+}
+
+export function Err<E>(e: E): Result<never, E>
+export function Err<T, E>(e: E): Result<T, E>
+export function Err<T, E>(e: E): Result<T, E> {
+  return new ErrVariant(e)
+}
