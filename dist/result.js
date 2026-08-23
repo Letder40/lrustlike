@@ -1,4 +1,4 @@
-class ResultMethods {
+class ResultAbstract {
     isOk() {
         return this instanceof OkVariant;
     }
@@ -6,51 +6,126 @@ class ResultMethods {
         return this instanceof ErrVariant;
     }
     isOkAnd(fn) {
-        if (this instanceof OkVariant) {
-            fn(this.value);
-            return true;
-        }
-        return false;
+        return this.isOk() && fn(this.value);
     }
     isErrAnd(fn) {
-        if (this instanceof ErrVariant) {
-            fn(this.error);
-            return true;
-        }
-        return false;
+        return this.isErr() && fn(this.error);
     }
-    expect(msg) {
-        if (this instanceof ErrVariant) {
-            throw new Error(`${msg} ${String(this.error)}`);
-        }
-        return this.value;
+    and(other) {
+        return this.match({
+            Ok: (_) => other,
+            Err: (e) => Err(e)
+        });
+    }
+    andThen(thenFn) {
+        return this.match({
+            Ok: (v) => thenFn(v),
+            Err: (e) => Err(e)
+        });
+    }
+    or(other) {
+        return this.match({
+            Ok: (v) => Ok(v),
+            Err: (_) => other
+        });
+    }
+    orElse(elseFn) {
+        return this.match({
+            Ok: (v) => Ok(v),
+            Err: (e) => elseFn(e)
+        });
     }
     unwrap() {
-        if (this instanceof ErrVariant) {
-            throw new Error(`Tried to unwrap Err: ${String(this.error)}`);
-        }
-        return this.value;
+        return this.match({
+            Ok: v => v,
+            Err: e => {
+                throw new Error(`Tried to unwrap Err: ${String(e)}`);
+            }
+        });
+    }
+    expect(msg) {
+        return this.match({
+            Ok: v => v,
+            Err: e => {
+                throw new Error(`${msg}: ${String(e)}`);
+            }
+        });
+    }
+    unwrapOr(v) {
+        return this.isOk() ? this.value : v;
+    }
+    unwrapOrElse(fn) {
+        return this.match({
+            Ok: (v) => v,
+            Err: (e) => fn(e)
+        });
+    }
+    map(mapFn) {
+        return this.match({
+            Ok: (v) => Ok(mapFn(v)),
+            Err: (e) => Err(e)
+        });
+    }
+    mapOr(fallback, mapFn) {
+        return this.match({
+            Ok: (v) => mapFn(v),
+            Err: (_) => fallback,
+        });
+    }
+    mapOrElse(fallback, mapFn) {
+        return this.match({
+            Ok: (v) => mapFn(v),
+            Err: (e) => fallback(e),
+        });
+    }
+    mapErr(mapFn) {
+        return this.match({
+            Ok: (v) => Ok(v),
+            Err: (e) => Err(mapFn(e))
+        });
+    }
+    inspect(inspectFn) {
+        if (this.isOk())
+            inspectFn(this.value);
+        return this;
+    }
+    inspectErr(inspectFn) {
+        if (this.isErr())
+            inspectFn(this.error);
+        return this;
+    }
+    flatten() {
+        return this.match({
+            Ok: (v) => v,
+            Err: (e) => Err(e),
+        });
     }
     match({ Ok, Err }) {
-        if (this instanceof OkVariant) {
+        if (this.isOk())
             return Ok(this.value);
-        }
-        return Err(this.error);
+        else if (this.isErr())
+            return Err(this.error);
+        else
+            throw new Error("unreachable");
     }
 }
-class OkVariant extends ResultMethods {
+class OkVariant extends ResultAbstract {
     value;
     constructor(value) {
         super();
         this.value = value;
     }
 }
-export const Ok = (v) => new OkVariant(v);
-class ErrVariant extends ResultMethods {
+class ErrVariant extends ResultAbstract {
     error;
     constructor(error) {
         super();
         this.error = error;
     }
 }
-export const Err = (e) => new ErrVariant(e);
+export function Ok(v) {
+    return new OkVariant(v);
+}
+export function Err(e) {
+    return new ErrVariant(e);
+}
