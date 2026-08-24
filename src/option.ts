@@ -46,7 +46,7 @@ abstract class OptionAbstract<T> {
   private _unwrap(m?: string): T {
     return this.match({
       Some: (v) => v,
-      None: () => {throw new Error(m ? m : "Tried to unwrap None")},
+      None: () => {throw new Error(m ??"Tried to unwrap None")},
     })
   }
 
@@ -145,9 +145,11 @@ class SomeVariant<T> extends OptionAbstract<T> {
 class NoneVariant extends OptionAbstract<never> {}
 
 export type Option<T> = SomeVariant<T> | NoneVariant
+export type Some<T> = SomeVariant<T>
+export type None = NoneVariant
 
-export const Some = <T>(v: T): Option<T> => new SomeVariant(v)
-export const None = (): Option<never> => new NoneVariant()
+export const Some = <T>(v: T): Some<T> => new SomeVariant(v)
+export const None = (): None => new NoneVariant()
 
 export const Option = {
   Some,
