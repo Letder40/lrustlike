@@ -17,7 +17,7 @@ abstract class ResultAbstract<T, E> {
 
   and<U>(other: Result<U, E>): Result<U, E> {
     return this.match({
-      Ok: (_) => other,
+      Ok: () => other,
       Err: (e) => Err(e)
     })
   }
@@ -32,7 +32,7 @@ abstract class ResultAbstract<T, E> {
   or<F>(other: Result<T, F>): Result<T, F> {
     return this.match({
       Ok:  (v) => Ok(v),
-      Err: (_) => other
+      Err: () => other
     })
   }
 
@@ -82,7 +82,7 @@ abstract class ResultAbstract<T, E> {
   mapOr<U>(fallback: U, mapFn: (v: T) => U): U {
     return this.match({
       Ok:  (v) => mapFn(v),
-      Err: (_) => fallback,
+      Err: () => fallback,
     })
   }
 
@@ -117,13 +117,13 @@ abstract class ResultAbstract<T, E> {
     })
   }
 
-  match<R>({
+  match<R, S>({
       Ok,
       Err
     }: {
       Ok: (v: T) => R,
-      Err: (E: E) => R
-    }): R
+      Err: (E: E) => S
+    }): R | S
   {
     if (this.isOk()) return Ok(this.value);
     else if (this.isErr()) return Err(this.error);
@@ -151,20 +151,39 @@ class ErrVariant<T, E> extends ResultAbstract<T, E> {
 export type Result<T, E> =
   | OkVariant<T, E>
   | ErrVariant<T, E>
+export type Ok<T, E> = OkVariant<T, E>
+export type Err<T, E> = ErrVariant<T, E>
 
-export function Ok<T>(v: T): Result<T, never>
-export function Ok<T, E>(v: T): Result<T, E>
+export type ResultVariant<T, E> =
+  | { readonly variant: "ok"; readonly value: T }
+  | { readonly variant: "err"; readonly error: E }
+
+export function Ok<T>(v: T): Ok<T, never>
+export function Ok<T, E>(v: T): Ok<T, E>
 export function Ok<T, E>(v: T): Result<T, E> {
   return new OkVariant(v)
 }
 
-export function Err<E>(e: E): Result<never, E>
-export function Err<T, E>(e: E): Result<T, E>
+export function Err<E>(e: E): Err<never, E>
+export function Err<T, E>(e: E): Err<T, E>
 export function Err<T, E>(e: E): Result<T, E> {
   return new ErrVariant(e)
 }
 
+export function toResultVariant<T, E>(result: Result<T, E>): ResultVariant<T, E> {
+  return result.match({
+    Ok: (value) => ({ variant: "ok", value }),
+    Err: (error) => ({ variant: "err", error }),
+  })
+}
+
+export function fromResultVariant<T, E>(result: ResultVariant<T, E>): Result<T, E> {
+  return result.variant === "ok" ? Ok(result.value) : Err(result.error)
+}
+
 export const Result = {
   Ok,
-  Err
+  Err,
+  toVariant: toResultVariant,
+  fromVariant: fromResultVariant,
 } as const
