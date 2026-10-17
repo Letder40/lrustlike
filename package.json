@@ -1,6 +1,6 @@
 {
   "name": "lrustlike",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Rust like utilities and error handling",
   "keywords": [
     "rust",
@@ -9,8 +9,14 @@
   ],
   "license": "MPL-2.0",
   "author": "Letder40 (https://github.com/Letder40)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Letder40/lrustlike.git"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
-
   "exports": {
     "./result": {
       "types": "./dist/result.d.ts",
@@ -37,16 +43,6 @@
       "import": "./dist/extensions/iterable/eager.js"
     }
   },
-
-  "files": [
-    "dist"
-  ],
-
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Letder40/lrustlike.git"
-  },
-
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build"
